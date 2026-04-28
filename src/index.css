@@ -1052,6 +1052,46 @@ body {
   box-sizing: border-box;
 }
 
+.compare-spec {
+  background: #0d0d1a;
+  border: 1px solid var(--border);
+  border-radius: var(--rounded-sm);
+  padding: 16px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text);
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.spec-heading {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+
+.spec-bullet {
+  padding-left: 16px;
+  position: relative;
+  color: var(--text-secondary, #b0b0c0);
+}
+
+.spec-bullet::before {
+  content: "•";
+  position: absolute;
+  left: 2px;
+  color: var(--accent);
+}
+
+.spec-spacer {
+  height: 8px;
+}
+
+.spec-line {
+  color: var(--text-secondary, #b0b0c0);
+}
+
 .compare-arrow {
   display: flex;
   align-items: center;
