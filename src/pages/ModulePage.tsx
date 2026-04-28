@@ -1,7 +1,9 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import curriculum from '../data/curriculum';
+import sections from '../data/curriculumSections';
 import ChallengeCard from '../components/ChallengeCard';
+import TutorialRenderer from '../components/visuals/TutorialRenderer';
 import ProgressBar from '../components/ProgressBar';
 import { useProgress } from '../hooks/useProgress';
 import { ArrowLeft, ChevronRight, BookOpen } from 'lucide-react';
@@ -22,7 +24,7 @@ export default function ModulePage() {
   const mod = curriculum.find(m => m.id === moduleId);
   const modIndex = curriculum.findIndex(m => m.id === moduleId);
   const [activeLessonIdx, setActiveLessonIdx] = useState(0);
-  const [showStory, setShowStory] = useState(true);
+  const [showTutorial, setShowTutorial] = useState(true);
 
   useEffect(() => {
     if (mod) {
@@ -40,6 +42,7 @@ export default function ModulePage() {
   }
 
   const lesson = mod.lessons[activeLessonIdx];
+  const lessonSections = sections[lesson.id];
   const allChallenges = curriculum.flatMap(m => m.lessons.flatMap(l => l.challenges));
   const totalCount = allChallenges.length;
   const completedCount = allChallenges.filter(c => isChallengeComplete(c.id)).length;
@@ -47,7 +50,6 @@ export default function ModulePage() {
   const lessonComplete = lesson.challenges.every(c => isChallengeComplete(c.id));
   const isLastLesson = activeLessonIdx === mod.lessons.length - 1;
   const nextModule = modIndex + 1 < curriculum.length ? curriculum[modIndex + 1] : null;
-
   const allModuleDone = mod.lessons.every(l => l.challenges.every(c => isChallengeComplete(c.id)));
 
   return (
@@ -76,9 +78,9 @@ export default function ModulePage() {
             <button
               key={l.id}
               className={`lesson-tab ${idx === activeLessonIdx ? 'active' : ''} ${done ? 'done' : ''}`}
-              onClick={() => { setActiveLessonIdx(idx); setShowStory(true); }}
+              onClick={() => { setActiveLessonIdx(idx); setShowTutorial(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
             >
-              {done ? '✓' : idx + 1}. {l.title}
+              {done ? '\u2713' : idx + 1}. {l.title}
             </button>
           );
         })}
@@ -90,30 +92,38 @@ export default function ModulePage() {
           <span className="teaches-badge">Teaches: {lesson.teaches}</span>
         </div>
 
-        {showStory ? (
+        {/* Tutorial Section — visual + interactive */}
+        {showTutorial && (
           <div className="story-section">
-            <div className="story-content">
-              {lesson.story.split('\n\n').map((para, i) => {
-                if (para.trim().startsWith('```')) {
-                  const code = para.replace(/```\w*\n?/g, '').trim();
-                  return <pre key={i} className="story-code"><code>{code}</code></pre>;
-                }
-                return (
-                  <p key={i} dangerouslySetInnerHTML={{
-                    __html: para
-                      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                      .replace(/`(.+?)`/g, '<code>$1</code>')
-                  }} />
-                );
-              })}
-            </div>
-            <button className="btn btn-start-challenges" onClick={() => setShowStory(false)}>
-              <BookOpen size={16} /> Start Challenges <ChevronRight size={16} />
+            {lessonSections ? (
+              <TutorialRenderer sections={lessonSections} />
+            ) : (
+              <div className="story-content">
+                {lesson.story.split('\n\n').map((para, i) => {
+                  if (para.trim().startsWith('```')) {
+                    const code = para.replace(/```\w*\n?/g, '').trim();
+                    return <pre key={i} className="story-code"><code>{code}</code></pre>;
+                  }
+                  return (
+                    <p key={i} dangerouslySetInnerHTML={{
+                      __html: para
+                        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/`(.+?)`/g, '<code>$1</code>')
+                    }} />
+                  );
+                })}
+              </div>
+            )}
+            <button className="btn btn-start-challenges" onClick={() => setShowTutorial(false)}>
+              Your Turn — Start Challenges <ChevronRight size={16} />
             </button>
           </div>
-        ) : (
+        )}
+
+        {/* Challenges Section */}
+        {!showTutorial && (
           <>
-            <button className="btn btn-show-story" onClick={() => setShowStory(true)}>
+            <button className="btn btn-show-story" onClick={() => setShowTutorial(true)}>
               <BookOpen size={16} /> Re-read the lesson
             </button>
 
@@ -130,8 +140,8 @@ export default function ModulePage() {
                   hintUsed={!!progress.hintsUsed[challenge.id]}
                   isLast={idx === lesson.challenges.length - 1}
                   onNext={() => {
-                    const nextChallengeEl = document.querySelector(`.challenge-card:nth-child(${idx + 2})`);
-                    nextChallengeEl?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    const nextEl = document.querySelector(`.challenge-card:nth-child(${idx + 2})`);
+                    nextEl?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                   }}
                 />
               ))}
@@ -141,7 +151,7 @@ export default function ModulePage() {
               <div className="lesson-complete-banner">
                 <h3>Lesson Complete!</h3>
                 {!isLastLesson ? (
-                  <button className="btn btn-next-lesson" onClick={() => { setActiveLessonIdx(activeLessonIdx + 1); setShowStory(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
+                  <button className="btn btn-next-lesson" onClick={() => { setActiveLessonIdx(activeLessonIdx + 1); setShowTutorial(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
                     Next Lesson <ChevronRight size={16} />
                   </button>
                 ) : allModuleDone && nextModule ? (
