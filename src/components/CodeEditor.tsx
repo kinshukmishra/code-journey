@@ -36,13 +36,9 @@ export default function CodeEditor({ value, onChange, language, readOnly }: Code
         <input
           type="text"
           value={value}
-          onChange={(e) => {
-            const filtered = e.target.value.replace(/[^01\s]/g, '');
-            onChange(filtered);
-          }}
-          maxLength={20}
+          onChange={(e) => onChange(e.target.value)}
           className="binary-input"
-          placeholder="Type 0s and 1s..."
+          placeholder="Type your answer..."
           readOnly={readOnly}
           spellCheck={false}
         />
