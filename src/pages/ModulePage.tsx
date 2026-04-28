@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import curriculum from '../data/curriculum';
 import sections from '../data/curriculumSections';
 import ChallengeCard from '../components/ChallengeCard';
@@ -25,18 +25,25 @@ export default function ModulePage() {
   const modIndex = curriculum.findIndex(m => m.id === moduleId);
   const [activeLessonIdx, setActiveLessonIdx] = useState(0);
   const [showTutorial, setShowTutorial] = useState(true);
+  const challengeRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  // Reset lesson index and tutorial state when module changes
+  useEffect(() => {
+    setActiveLessonIdx(0);
+    setShowTutorial(true);
+  }, [moduleId]);
 
   useEffect(() => {
     if (mod) {
-      setCurrentLocation(mod.id, mod.lessons[0]?.id || '');
+      setCurrentLocation(mod.id, mod.lessons[activeLessonIdx]?.id || '');
     }
-  }, [mod, setCurrentLocation]);
+  }, [mod, activeLessonIdx, setCurrentLocation]);
 
   if (!mod) {
     return (
       <div className="not-found">
         <h2>Module not found</h2>
-        <button onClick={() => navigate('/')}>Go Home</button>
+        <button className="btn btn-hero" onClick={() => navigate('/')}>Go Home</button>
       </div>
     );
   }
@@ -51,6 +58,27 @@ export default function ModulePage() {
   const isLastLesson = activeLessonIdx === mod.lessons.length - 1;
   const nextModule = modIndex + 1 < curriculum.length ? curriculum[modIndex + 1] : null;
   const allModuleDone = mod.lessons.every(l => l.challenges.every(c => isChallengeComplete(c.id)));
+
+  const goToNextLesson = () => {
+    if (!isLastLesson) {
+      setActiveLessonIdx(prev => prev + 1);
+      setShowTutorial(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const goToNextModule = () => {
+    if (nextModule) {
+      navigate(`/module/${nextModule.id}`);
+    }
+  };
+
+  const scrollToNextChallenge = (currentIdx: number) => {
+    const nextRef = challengeRefs.current[currentIdx + 1];
+    if (nextRef) {
+      nextRef.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
 
   return (
     <div className="module-page" style={{ '--accent': mod.color } as React.CSSProperties}>
@@ -71,14 +99,20 @@ export default function ModulePage() {
         totalCount={totalCount}
       />
 
-      <div className="lesson-tabs">
+      <div className="lesson-tabs" role="tablist">
         {mod.lessons.map((l, idx) => {
           const done = l.challenges.every(c => isChallengeComplete(c.id));
           return (
             <button
               key={l.id}
+              role="tab"
+              aria-selected={idx === activeLessonIdx}
               className={`lesson-tab ${idx === activeLessonIdx ? 'active' : ''} ${done ? 'done' : ''}`}
-              onClick={() => { setActiveLessonIdx(idx); setShowTutorial(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+              onClick={() => {
+                setActiveLessonIdx(idx);
+                setShowTutorial(true);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
             >
               {done ? '\u2713' : idx + 1}. {l.title}
             </button>
@@ -92,7 +126,6 @@ export default function ModulePage() {
           <span className="teaches-badge">Teaches: {lesson.teaches}</span>
         </div>
 
-        {/* Tutorial Section — visual + interactive */}
         {showTutorial && (
           <div className="story-section">
             {lessonSections ? (
@@ -114,13 +147,16 @@ export default function ModulePage() {
                 })}
               </div>
             )}
-            <button className="btn btn-start-challenges" onClick={() => setShowTutorial(false)}>
+            <button
+              className="btn btn-start-challenges"
+              data-testid="start-challenges"
+              onClick={() => setShowTutorial(false)}
+            >
               Your Turn — Start Challenges <ChevronRight size={16} />
             </button>
           </div>
         )}
 
-        {/* Challenges Section */}
         {!showTutorial && (
           <>
             <button className="btn btn-show-story" onClick={() => setShowTutorial(true)}>
@@ -129,33 +165,42 @@ export default function ModulePage() {
 
             <div className="challenges-list">
               {lesson.challenges.map((challenge, idx) => (
-                <ChallengeCard
+                <div
                   key={challenge.id}
-                  challenge={challenge}
-                  isComplete={isChallengeComplete(challenge.id)}
-                  stars={getStarsForChallenge(challenge.id)}
-                  onComplete={completeChallenge}
-                  onAttempt={recordAttempt}
-                  onHint={useHint}
-                  hintUsed={!!progress.hintsUsed[challenge.id]}
-                  isLast={idx === lesson.challenges.length - 1}
-                  onNext={() => {
-                    const nextEl = document.querySelector(`.challenge-card:nth-child(${idx + 2})`);
-                    nextEl?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                  }}
-                />
+                  ref={el => { challengeRefs.current[idx] = el; }}
+                >
+                  <ChallengeCard
+                    challenge={challenge}
+                    isComplete={isChallengeComplete(challenge.id)}
+                    stars={getStarsForChallenge(challenge.id)}
+                    onComplete={completeChallenge}
+                    onAttempt={recordAttempt}
+                    onHint={useHint}
+                    hintUsed={!!progress.hintsUsed[challenge.id]}
+                    isLast={idx === lesson.challenges.length - 1}
+                    onNext={() => scrollToNextChallenge(idx)}
+                  />
+                </div>
               ))}
             </div>
 
             {lessonComplete && (
-              <div className="lesson-complete-banner">
+              <div className="lesson-complete-banner" data-testid="lesson-complete">
                 <h3>Lesson Complete!</h3>
                 {!isLastLesson ? (
-                  <button className="btn btn-next-lesson" onClick={() => { setActiveLessonIdx(activeLessonIdx + 1); setShowTutorial(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
+                  <button
+                    className="btn btn-next-lesson"
+                    data-testid="next-lesson"
+                    onClick={goToNextLesson}
+                  >
                     Next Lesson <ChevronRight size={16} />
                   </button>
                 ) : allModuleDone && nextModule ? (
-                  <button className="btn btn-next-module" onClick={() => navigate(`/module/${nextModule.id}`)}>
+                  <button
+                    className="btn btn-next-module"
+                    data-testid="next-module"
+                    onClick={goToNextModule}
+                  >
                     {nextModule.icon} Next: {nextModule.title} <ChevronRight size={16} />
                   </button>
                 ) : allModuleDone ? (

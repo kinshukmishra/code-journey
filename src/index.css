@@ -783,6 +783,21 @@ body {
   color: var(--text-dim);
 }
 
+/* ── CHALLENGE DONE HINT ─────────────── */
+.challenge-done-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 16px;
+  padding: 12px;
+  color: var(--success);
+  font-size: 14px;
+  font-weight: 600;
+  background: rgba(16, 185, 129, 0.08);
+  border-radius: var(--rounded-sm);
+}
+
 /* ── HINT BOX ─────────────────────────── */
 .hint-box {
   margin-top: 12px;

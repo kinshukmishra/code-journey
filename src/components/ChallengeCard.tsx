@@ -6,7 +6,7 @@ import { runAssembly } from '../utils/assemblyRunner';
 import { runBasic } from '../utils/basicRunner';
 import { runPython } from '../utils/pythonRunner';
 import { validateChallenge } from '../utils/validators';
-import { Star, Lightbulb, RotateCcw, CheckCircle, XCircle, ChevronRight } from 'lucide-react';
+import { Star, Lightbulb, RotateCcw, CheckCircle, XCircle, ChevronRight, ChevronDown } from 'lucide-react';
 
 interface ChallengeCardProps {
   challenge: Challenge;
@@ -42,6 +42,8 @@ export default function ChallengeCard({
   const [isAnimating, setIsAnimating] = useState(false);
 
   const runCode = useCallback(() => {
+    if (isComplete) return;
+
     onAttempt(challenge.id);
 
     try {
@@ -67,7 +69,7 @@ export default function ChallengeCard({
     } catch (e) {
       setResult({ correct: false, message: 'Something went wrong: ' + (e as Error).message });
     }
-  }, [code, challenge, onAttempt, onComplete]);
+  }, [code, challenge, isComplete, onAttempt, onComplete]);
 
   const reset = () => {
     setCode(challenge.starterCode);
@@ -82,7 +84,10 @@ export default function ChallengeCard({
   const useBinaryToggle = challenge.type === 'binary' && challenge.starterCode === '00000000';
 
   return (
-    <div className={`challenge-card ${isComplete ? 'complete' : ''} ${isAnimating ? 'celebrating' : ''}`}>
+    <div
+      className={`challenge-card ${isComplete ? 'complete' : ''} ${isAnimating ? 'celebrating' : ''}`}
+      data-testid={`challenge-${challenge.id}`}
+    >
       <div className="challenge-header">
         <h3>{challenge.title}</h3>
         <div className="star-display">
@@ -112,7 +117,12 @@ export default function ChallengeCard({
       )}
 
       <div className="challenge-actions">
-        <button className="btn btn-run" onClick={runCode} disabled={isComplete}>
+        <button
+          className="btn btn-run"
+          data-testid={`run-${challenge.id}`}
+          onClick={runCode}
+          disabled={isComplete}
+        >
           {isComplete ? (
             <><CheckCircle size={16} /> Completed!</>
           ) : (
@@ -139,16 +149,26 @@ export default function ChallengeCard({
       )}
 
       {result && (
-        <div className={`result-box ${result.correct ? 'success' : 'error'}`}>
+        <div className={`result-box ${result.correct ? 'success' : 'error'}`} data-testid={`result-${challenge.id}`}>
           {result.correct ? <CheckCircle size={18} /> : <XCircle size={18} />}
           <span>{result.message}</span>
         </div>
       )}
 
       {isComplete && !isLast && (
-        <button className="btn btn-next" onClick={onNext}>
-          Next Challenge <ChevronRight size={16} />
+        <button
+          className="btn btn-next"
+          data-testid={`next-${challenge.id}`}
+          onClick={onNext}
+        >
+          Next Challenge <ChevronDown size={16} />
         </button>
+      )}
+
+      {isComplete && isLast && (
+        <div className="challenge-done-hint" data-testid={`done-${challenge.id}`}>
+          <CheckCircle size={16} /> All challenges done — check below!
+        </div>
       )}
     </div>
   );
