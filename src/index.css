@@ -1019,13 +1019,15 @@ body {
 /* ── CODE COMPARE ────────────────────── */
 .code-compare {
   display: flex;
-  gap: 12px;
+  gap: 16px;
   align-items: stretch;
 }
 
 .compare-panel {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .compare-label {
@@ -1037,62 +1039,66 @@ body {
   margin-bottom: 8px;
 }
 
-.compare-code {
+.compare-content {
   background: #0d0d1a;
   border: 1px solid var(--border);
   border-radius: var(--rounded-sm);
-  padding: 16px;
+  padding: 20px;
   font-family: var(--mono);
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--text);
-  margin: 0;
-  overflow-x: auto;
-  height: 100%;
-  box-sizing: border-box;
-}
-
-.compare-spec {
-  background: #0d0d1a;
-  border: 1px solid var(--border);
-  border-radius: var(--rounded-sm);
-  padding: 16px;
   font-size: 14px;
   line-height: 1.7;
   color: var(--text);
-  height: 100%;
-  box-sizing: border-box;
+  flex: 1;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.compare-content-short {
+  display: flex;
+  align-items: center;
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+.compare-content-spec {
+  font-family: inherit;
 }
 
 .spec-heading {
   font-weight: 700;
-  font-size: 15px;
+  font-size: 16px;
   color: var(--accent);
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
-.spec-bullet {
-  padding-left: 16px;
+.spec-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 2px 0;
+  color: #c0c0d0;
+}
+
+.spec-dot {
+  width: 6px;
+  height: 6px;
+  min-width: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: inline-block;
   position: relative;
-  color: var(--text-secondary, #b0b0c0);
+  top: -1px;
 }
 
-.spec-bullet::before {
-  content: "•";
-  position: absolute;
-  left: 2px;
-  color: var(--accent);
-}
-
-.spec-spacer {
+.spec-gap {
   height: 8px;
 }
 
-.spec-line {
-  color: var(--text-secondary, #b0b0c0);
+.evolution-spec {
+  font-family: inherit;
 }
 
-.compare-arrow {
+.compare-divider {
   display: flex;
   align-items: center;
   color: var(--accent);
@@ -1780,7 +1786,7 @@ body {
     flex-direction: column;
   }
 
-  .compare-arrow {
+  .compare-divider {
     transform: rotate(90deg);
     justify-content: center;
   }
